@@ -1,0 +1,207 @@
+{
+  "fetchedAt": "2026-08-21T14:42:51.952Z",
+  "symbols": {
+    "QQQ": {
+      "asOf": "2026-08-21 14:42:08",
+      "symbol": "QQQ",
+      "spot": 711.025,
+      "expiry": "2028-01-21",
+      "dte": 518,
+      "strike": 710,
+      "iv": 25.62,
+      "ivCboe": 24.91,
+      "iv30": 19.583,
+      "r": 4.033,
+      "q": 0.368,
+      "callMid": 103.25,
+      "putMid": 66.43,
+      "call": {
+        "bid": 101,
+        "ask": 105.5,
+        "theo": 102.9351,
+        "delta": 0.6378,
+        "openInterest": 237
+      },
+      "put": {
+        "bid": 64,
+        "ask": 68.86,
+        "theo": 66.0627,
+        "delta": -0.4,
+        "openInterest": 403
+      },
+      "priceBasis": "買賣價中價",
+      "parYield": 4.074,
+      "yieldCurveDate": "2026-08-20",
+      "dividendYieldNote": "由買賣權平價反推"
+    },
+    "QLD": {
+      "asOf": "2026-08-21 00:59:29",
+      "symbol": "QLD",
+      "spot": 88.95,
+      "expiry": "2028-01-21",
+      "dte": 518,
+      "strike": 90,
+      "iv": 47.36,
+      "ivCboe": 47.24,
+      "iv30": 39.596,
+      "r": 4.033,
+      "q": 1.527,
+      "callMid": 20.15,
+      "putMid": 18.1,
+      "call": {
+        "bid": 18.5,
+        "ask": 21.8,
+        "theo": 20.1119,
+        "delta": 0.616,
+        "openInterest": 59
+      },
+      "put": {
+        "bid": 16.4,
+        "ask": 19.8,
+        "theo": 18.3197,
+        "delta": -0.3776,
+        "openInterest": 33
+      },
+      "priceBasis": "買賣價中價",
+      "parYield": 4.074,
+      "yieldCurveDate": "2026-08-20",
+      "dividendYieldNote": "由買賣權平價反推"
+    },
+    "TQQQ": {
+      "asOf": "2026-08-21 14:42:13",
+      "symbol": "TQQQ",
+      "spot": 70.465,
+      "expiry": "2028-01-21",
+      "dte": 518,
+      "strike": 70,
+      "iv": 71.97,
+      "ivCboe": 72.09,
+      "iv30": 57.928,
+      "r": 4.033,
+      "q": 2.069,
+      "callMid": 23.5,
+      "putMid": 21.18,
+      "call": {
+        "bid": 22.35,
+        "ask": 24.65,
+        "theo": 23.4115,
+        "delta": 0.6678,
+        "openInterest": 5042
+      },
+      "put": {
+        "bid": 20.35,
+        "ask": 22,
+        "theo": 21.3655,
+        "delta": -0.3188,
+        "openInterest": 2491
+      },
+      "priceBasis": "買賣價中價",
+      "parYield": 4.074,
+      "yieldCurveDate": "2026-08-20",
+      "dividendYieldNote": "由買賣權平價反推"
+    },
+    "SPY": {
+      "asOf": "2026-08-21 14:42:18",
+      "symbol": "SPY",
+      "spot": 764.93,
+      "expiry": "2028-01-21",
+      "dte": 518,
+      "strike": 765,
+      "iv": 19.42,
+      "ivCboe": 18.67,
+      "iv30": 12.328,
+      "r": 4.033,
+      "q": 0.734,
+      "callMid": 86.78,
+      "putMid": 52.22,
+      "call": {
+        "bid": 84.57,
+        "ask": 89,
+        "theo": 87.3338,
+        "delta": 0.6396,
+        "openInterest": 2289
+      },
+      "put": {
+        "bid": 52.09,
+        "ask": 52.35,
+        "theo": 52.2954,
+        "delta": -0.411,
+        "openInterest": 3595
+      },
+      "priceBasis": "買賣價中價",
+      "parYield": 4.074,
+      "yieldCurveDate": "2026-08-20",
+      "dividendYieldNote": "由買賣權平價反推"
+    },
+    "SSO": {
+      "asOf": "2026-08-21 01:31:26",
+      "symbol": "SSO",
+      "spot": 69.61,
+      "expiry": "2028-01-21",
+      "dte": 518,
+      "strike": 70,
+      "iv": 35.68,
+      "ivCboe": 35.71,
+      "iv30": 25.511,
+      "r": 4.033,
+      "q": 1.746,
+      "callMid": 12.2,
+      "putMid": 10.4,
+      "call": {
+        "bid": 10.8,
+        "ask": 13.6,
+        "theo": 11.9403,
+        "delta": 0.5995,
+        "openInterest": 99
+      },
+      "put": {
+        "bid": 8.7,
+        "ask": 12.1,
+        "theo": 10.3437,
+        "delta": -0.401,
+        "openInterest": 4
+      },
+      "priceBasis": "買賣價中價",
+      "parYield": 4.074,
+      "yieldCurveDate": "2026-08-20",
+      "dividendYieldNote": "由買賣權平價反推"
+    },
+    "SPXL": {
+      "asOf": "2026-08-21 12:54:45",
+      "symbol": "SPXL",
+      "spot": 287.304,
+      "expiry": "2028-01-21",
+      "dte": 518,
+      "strike": 285,
+      "iv": 50.6,
+      "ivCboe": 50,
+      "iv30": 38.493,
+      "r": 4.033,
+      "q": 3.561,
+      "callMid": 66.25,
+      "putMid": 62.25,
+      "call": {
+        "bid": 64,
+        "ask": 68.5,
+        "theo": 66.3952,
+        "delta": 0.6164,
+        "openInterest": 346
+      },
+      "put": {
+        "bid": 60,
+        "ask": 64.5,
+        "theo": 62.0373,
+        "delta": -0.3702,
+        "openInterest": 8
+      },
+      "priceBasis": "買賣價中價",
+      "parYield": 4.074,
+      "yieldCurveDate": "2026-08-20",
+      "dividendYieldNote": "由買賣權平價反推"
+    }
+  },
+  "sources": {
+    "chain": "https://cdn.cboe.com/api/global/delayed_quotes/options/<SYMBOL>.json",
+    "yieldCurve": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_yield_curve"
+  }
+}

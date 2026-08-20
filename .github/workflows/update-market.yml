@@ -1,0 +1,67 @@
+name: 更新市場資料並發佈
+
+on:
+  schedule:
+    # GitHub 的 cron 只吃 UTC，不隨日光節約時間位移，因此固定排一組：
+    #   夏令 EDT（UTC−4）→ 美東 08:30，開盤前一小時
+    #   冬令 EST（UTC−5）→ 美東 07:30，開盤前兩小時
+    # 兩個時點都在盤前，抓到的是前一交易日收盤的掛單。
+    - cron: "30 12 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write # 回寫 index.html 與 market.json
+  pages: write
+  id-token: write
+
+# 不取消進行中的部署，避免半途中斷留下壞掉的站台
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 抓取選擇權鏈與殖利率曲線
+        run: node fetch-market.mjs
+
+      - name: 回寫更新後的預設值
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- index.html market.json chain.json; then
+            echo "資料與上次相同（可能是休市日），略過提交"
+          else
+            asof=$(node -p "require('./market.json').asOf")
+            git add index.html market.json chain.json
+            git commit -m "資料更新 $asof"
+            git push
+          fi
+
+      - name: 組出待發佈的靜態檔
+        run: |
+          mkdir -p _site
+          cp index.html market.json chain.json _site/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
