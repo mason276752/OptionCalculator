@@ -4,8 +4,6 @@
 //   選擇權鏈  CBOE 延遲報價 CDN
 //   公債殖利率 美國財政部 Daily Treasury Par Yield Curve
 
-import { readFile } from "node:fs/promises";
-
 export const DAY = 86400000;
 
 export function todayUtc(){
@@ -146,14 +144,12 @@ export function interpolate(curve, T){
 export const toContinuous = parYield => 2*Math.log(1 + parYield/200)*100;
 
 /* ---------- 借用頁面自己的定價模型 ---------- */
-// 直接從 index.html 取出 Black–Scholes 區塊來用，確保算出來的數字跟頁面一致；
+// 直接 import 頁面用的那個模組，確保算出來的數字跟頁面一致；
 // 若改抄一份，兩邊遲早會走鐘。
-export async function loadPricer(htmlPath){
-  const html = await readFile(htmlPath, "utf8");
-  const a = html.indexOf("function normCdf");
-  const b = html.indexOf("/* ============ 狀態");
-  if(a < 0 || b < 0) throw new Error("index.html 找不到 Black–Scholes 區塊");
-  return new Function(html.slice(a, b) + "\nreturn {bs, impliedVol};")();
+// （改成 Vue 專案之前，這裡是從 index.html 的 <script> 裡把原始碼切出來 eval。）
+export async function loadPricer(){
+  const { bs, impliedVol } = await import("./src/lib/bs.js");
+  return { bs, impliedVol };
 }
 
 /* ---------- 由買賣權平價反推股息殖利率 ---------- */
@@ -167,7 +163,7 @@ export function impliedDividend({callMid, putMid, spot, K, T, r}){
 }
 
 /* ---------- 一次備妥定價所需的市場參數 ---------- */
-export async function loadMarket({symbol, expiry = null, dte = null, minDte = 0, htmlPath, log = () => {}}){
+export async function loadMarket({symbol, expiry = null, dte = null, minDte = 0, log = () => {}}){
   log(`抓取 ${symbol} 選擇權鏈…`);
   const chain = await fetchChain(symbol);
   const spot = chain.data.current_price;
@@ -191,7 +187,7 @@ export async function loadMarket({symbol, expiry = null, dte = null, minDte = 0,
   return {
     chain, byExp, spot, expiry:picked.e, dte:picked.dte, T, atm,
     r:+r.toFixed(3), q, qNote, parYield:+parYield.toFixed(3), curveDate, curve,
-    pricer: await loadPricer(htmlPath)
+    pricer: await loadPricer()
   };
 }
 

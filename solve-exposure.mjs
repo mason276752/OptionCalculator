@@ -13,11 +13,8 @@
 // 每個履約價的 IV 都由它自己的市場中價反解，不共用一個 IV——
 // 波動率偏斜會讓價外選擇權的理論價明顯偏離，共用單一 IV 算出來的合約價不能用。
 
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
 import { loadMarket, fetchChain, groupByExpiry, listExpiries, todayUtc, quoteOf } from "./market-lib.mjs";
 
-const HERE = dirname(fileURLToPath(import.meta.url));
 const HELP = `用法：node solve-exposure.mjs --exposure 100000 [選項]
 
 必要
@@ -74,9 +71,8 @@ if(args.listExpiries){
 
 if(!(args.exposure > 0)){ console.error("請用 --exposure 指定目標曝險金額\n"); console.log(HELP); process.exit(1); }
 
-const htmlPath = join(HERE, "index.html");
 const m = await loadMarket({
-  symbol:args.symbol, expiry:args.expiry, dte:args.dte, minDte:365, htmlPath, log:console.log
+  symbol:args.symbol, expiry:args.expiry, dte:args.dte, minDte:365, log:console.log
 });
 const {spot, expiry, dte, T, r, q, pricer:{bs, impliedVol}} = m;
 const wantCall = args.cp === "call";

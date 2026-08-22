@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # 回寫 index.html 與 market.json
+  contents: write # 回寫 market.json 與 chain.json
   pages: write
   id-token: write
 
@@ -28,6 +28,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+
+      - name: 安裝相依套件
+        run: npm ci
 
       - name: 抓取選擇權鏈與殖利率曲線
         run: node fetch-market.mjs
@@ -36,25 +40,24 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- index.html market.json chain.json; then
+          if git diff --quiet -- market.json chain.json; then
             echo "資料與上次相同（可能是休市日），略過提交"
           else
-            asof=$(node -p "require('./market.json').asOf")
-            git add index.html market.json chain.json
+            asof=$(node -p "require('./market.json').fetchedAt")
+            git add market.json chain.json
             git commit -m "資料更新 $asof"
             git push
           fi
 
-      - name: 組出待發佈的靜態檔
-        run: |
-          mkdir -p _site
-          cp index.html market.json chain.json _site/
+      # 兩份 JSON 由 src/lib/data.js import 進來，打包後就直接嵌在頁面裡
+      - name: 打包靜態站台
+        run: npm run build
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: dist
 
   deploy:
     needs: update

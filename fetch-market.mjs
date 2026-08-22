@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// 抓取多個標的的選擇權鏈與公債殖利率，寫入 market.json / chain.json，
-// 並更新 index.html 的預設值與鏈資料區塊。
+// 抓取多個標的的選擇權鏈與公債殖利率，寫入 market.json / chain.json。
+// 頁面（src/lib/data.js）直接 import 這兩份檔案，因此更新完就是新的預設值。
 //
 //   node fetch-market.mjs                              # 預設六個標的
 //   node fetch-market.mjs --symbols QQQ,SPY
@@ -8,7 +8,7 @@
 //   node fetch-market.mjs --min-dte 180                # 放寬預設到期日的最短天期
 //   node fetch-market.mjs --no-write                   # 只印出結果，不改檔案
 
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { loadMarket, buildChainSummary } from "./market-lib.mjs";
@@ -34,8 +34,8 @@ function parseArgs(argv){
   return o;
 }
 
-async function fetchOne(symbol, args, htmlPath){
-  const m = await loadMarket({symbol, expiry:args.expiry, minDte:args.minDte, htmlPath});
+async function fetchOne(symbol, args){
+  const m = await loadMarket({symbol, expiry:args.expiry, minDte:args.minDte});
   const {spot, expiry, dte, T, atm, r, q, qNote, pricer:{bs, impliedVol}} = m;
   const {K, call, put, callQuote, putQuote} = atm;
   const callMid = callQuote.price, putMid = putQuote.price;
@@ -61,23 +61,20 @@ async function fetchOne(symbol, args, htmlPath){
     put:  {bid:put.bid,  ask:put.ask,  theo:put.theo,  delta:put.delta,  openInterest:put.open_interest},
     priceBasis, parYield:m.parYield, yieldCurveDate:m.curveDate, dividendYieldNote:qNote
   };
-  // 嵌進頁面的精簡版：只留載入預設部位需要的欄位
-  const inline = {asOf:detail.asOf, symbol, spot, expiry, dte, strike:K, iv, r, q, callMid};
   const summary = buildChainSummary(m);
   const strikes = summary.expiries.reduce((a, x) => a + x.rows.length, 0);
 
   console.log(`  ${symbol.padEnd(5)} ${String(spot).padStart(8)}｜${expiry}（${dte} 天）｜K ${K}｜`
     + `IV ${iv}%｜${summary.expiries.length} 個到期日、${strikes} 個履約價｜${priceBasis}`);
-  return {detail, inline, summary};
+  return {detail, summary};
 }
 
 const args = parseArgs(process.argv.slice(2));
-const htmlPath = join(HERE, "index.html");
 
 console.log(`抓取 ${args.symbols.length} 個標的的選擇權鏈與公債殖利率…`);
 const results = {}, failed = [];
 for(const sym of args.symbols){
-  try{ results[sym] = await fetchOne(sym, args, htmlPath); }
+  try{ results[sym] = await fetchOne(sym, args); }
   catch(e){ failed.push(sym); console.log(`  ${sym.padEnd(5)} 失敗：${e.message}`); }
 }
 if(!Object.keys(results).length) throw new Error("所有標的都抓取失敗，不更新任何檔案");
@@ -100,20 +97,6 @@ if(!args.write){
 
 await writeFile(join(HERE, "market.json"), JSON.stringify(market, null, 2) + "\n");
 await writeFile(join(HERE, "chain.json"), JSON.stringify(chains) + "\n");
-console.log(`\n已寫入 market.json 與 chain.json`);
-
-// index.html 是單一自足檔案（不讀同層 JSON），因此把資料直接嵌回標記區塊之間。
-let html = await readFile(htmlPath, "utf8");
-
-function replaceBlock(src, name, body){
-  const START = `/* ==${name}:START==`, END = `/* ==${name}:END== */`;
-  const s = src.indexOf(START), e = src.indexOf(END);
-  if(s < 0 || e < 0) throw new Error(`index.html 找不到 ${name} 標記區塊`);
-  return src.slice(0, s) + `${START} 由 fetch-market.mjs 自動更新，勿手動編輯 */\n${body}\n${END}` + src.slice(e + END.length);
-}
-
-const inlines = Object.fromEntries(Object.entries(results).map(([s, r]) => [s, r.inline]));
-html = replaceBlock(html, "MARKET-DATA", `const MARKETS = ${JSON.stringify(inlines, null, 2)};`);
-html = replaceBlock(html, "CHAIN-DATA", `const CHAINS = ${JSON.stringify(chains)};`);
-await writeFile(htmlPath, html);
-console.log(`已更新 ${htmlPath}（${Object.keys(results).join("、")}）`);
+console.log(`\n已寫入 market.json 與 chain.json（${Object.keys(results).join("、")}）`);
+// 這兩份 JSON 由 src/lib/data.js 直接 import，打包時就會帶進頁面；
+// 過去要另外把資料嵌回 index.html 的標記區塊，改成 Vue 專案之後不再需要。
