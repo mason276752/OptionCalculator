@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import { state, isMulti, activeCombo } from "../lib/state.js";
-import { capitalBase, greeks, positionValue, pnlAt } from "../lib/model.js";
+import { capitalBase, greeks, positionValue, pnlAt, requiredMargin, marginDetail, hasShortLeg } from "../lib/model.js";
 import { nf, money, signedMoney, price, cls } from "../lib/format.js";
 
 const props = defineProps({ a: { type: Object, required: true } });
@@ -18,6 +18,13 @@ const items = computed(() => {
   const rr = isFinite(a.maxProfit) && risk > 0 ? a.maxProfit/risk : NaN;
   const nowPnl = pnlAt(state.S, state.tRem);
   const cap = capitalBase(a);
+  // 建倉當下的淨現金流；正值＝要掏錢。與 capitalBase() 裡的 debit 同一個定義
+  const debit = -a.netPremium + a.stockCost;
+
+  // 公式住在 model.js，保證金曲線圖用的是同一條（見 requiredMargin）
+  const hasShort = hasShortLeg();
+  const marginAmt = requiredMargin(a);
+  const mDetail = marginDetail();
   const notional = greeks().delta * state.S;       // Delta 等值的標的市值
   const lev = cap && cap.amount > 0 ? Math.abs(notional)/cap.amount : NaN;
   // 波動倍數（Omega／Lambda）：標的變動 1%，部位理論現值跟著變動幾 %
@@ -82,6 +89,39 @@ const items = computed(() => {
         : "全區間同方向"},
     {k:"淨權利金", v:signedMoney(a.netPremium) + pct(a.netPremium), c:cls(a.netPremium),
      s:a.netPremium >= 0 ? "淨收取（賣方）" : "淨支付（買方）", t:pctNote},
+    /* 淨權利金只算選擇權腳，所以掩護性買權那類部位會顯示「淨收取」，
+       但你其實得先掏錢買現股。這一格才是「現在要準備多少錢」的答案。 */
+    {k:"建倉支出", v:debit > 1e-9 ? money(debit) : debit < -1e-9 ? "倒收 " + money(-debit) : "0", c:"",
+     s:[
+       Math.abs(a.stockCost) > 0.005
+         ? `權利金 ${signedMoney(a.netPremium)}　現股 ${money(a.stockCost)}`
+         : "全額為選擇權權利金",
+       // 風險無上限的部位，真正卡住帳戶的是保證金而不是這筆現金
+       cap && cap.estimated ? `另需保證金 ${money(cap.amount)}（估）` : ""
+     ].filter(Boolean).join("　"),
+     t:`建倉當下的淨現金流：買進腳付出的權利金與現股成本，減掉賣出腳收取的權利金。`
+       + `不含手續費、稅與買賣價差。`
+       + (cap && cap.estimated
+          ? `此部位風險無上限，除了這筆現金還要壓保證金（小字為 Reg-T 估算，券商實收可能不同）。`
+          : "")},
+    {k:"所需保證金", v:hasShort ? money(marginAmt) : "—", c:"",
+     /* 只有裸露腳與放空現股會吃標的價格；兩者都沒有就是價差擔保，鐵定水平。
+        不寫死「隨標的變動」——裸露賣權在深價外時下限會咬住，那一段其實也是平的，
+        實際會不會動看下方那張圖。 */
+     s:!hasShort ? "買方部位，全額付現"
+       : marginAmt < 0.005 ? "賣出腳已有掩護，不另佔保證金"
+       : mDetail.naked > 0 && mDetail.shortStock > 0
+         ? `含 ${mDetail.naked} 口裸露腳與放空現股`
+       : mDetail.naked > 0 ? `含 ${mDetail.naked} 口裸露腳，走 Reg-T`
+       : mDetail.shortStock > 0 ? "放空現股，Reg-T 收 50%"
+       : "價差擔保，不隨標的變動",
+     t:`帳戶為了這個部位必須壓住的資金。先判斷每條賣出腳有沒有被掩護：`
+       + `現股掩護的（掩護性買權）不另外要求；被買進腳擋住的收兩履約價的價差寬度；`
+       + `什麼都沒擋的才走 Reg-T 裸賣公式——那條公式吃標的價格，所以只有這種部位的保證金會隨標的膨脹。`
+       + `兩側取較大的一邊（標的只會落在一邊）；兩邊都有裸露腳時再加計另一邊的權利金。`
+       + `放空現股另計 50%。`
+       + `最後與「最壞情況擔保」取低者——不必為一個最多賠 X 的部位壓超過 X 的錢。`
+       + `一律為 Reg-T 基準，券商的投資組合保證金通常更低；台指選擇權用 SPAN，公式完全不同。`},
     {k:"報酬風險比", v:isFinite(rr) ? nf(rr,2) + "×" : "—", c:"",
      s:!isFinite(risk) ? "風險無上限" : !isFinite(a.maxProfit) ? "獲利無上限，無法計比"
         : "以最大風險 " + money(risk) + " 計"},

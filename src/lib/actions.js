@@ -1,7 +1,7 @@
 import { MARKETS, CHAINS, daysTo } from "./data.js";
 import {
   state, src, nextLegId, nextGroupId, nextComboId,
-  freeColorSlot, nextComboName, SERIES_N
+  freeColorSlot, nextComboName, SERIES_N, setSpotAnchor
 } from "./state.js";
 import { bs } from "./bs.js";
 import { clearSmileCache, yearsLeft } from "./model.js";
@@ -13,6 +13,13 @@ export function onNum(ev, apply){
   const v = parseFloat(ev.target.value);
   if(!isFinite(v)) return;
   apply(v);
+}
+
+/* 「重新指定現價」——手動輸入或由曝險試算帶入時走這條，圖表區間跟著重新置中。
+   滑桿橫移則只改 state.S，不動錨點（見 state.js 的 spotAnchor）。 */
+export function setSpot(v){
+  state.S = v;
+  setSpotAnchor(v);
 }
 
 // 新組合先給一口價平買權當起點；空組合會讓摘要的最大獲利／虧損全部是 0，讀不出東西
@@ -56,4 +63,6 @@ export function applySymbol(sym, {reset = true} = {}){
     }];
     state.active = state.combos[0].id;
   }
+  // 換標的（或載入既有設定）之後，圖表區間重新以現價置中
+  setSpotAnchor(state.S);
 }

@@ -18,7 +18,8 @@ const GREEK_META = [
   {k:"decay", g:"ΣΘ 累計耗損", h:"自建倉起算",  fmt:signedMoney},
   {k:"vega",  g:"ν Vega",  h:"IV 每 +1%",     fmt:signedMoney},
   {k:"rho",   g:"ρ Rho",   h:"利率每 +1%",    fmt:signedMoney},
-  {k:"lev",   g:"資金槓桿", h:"曝險 ÷ 投入",    fmt:v => isFinite(v) ? nf(v, 2) + "×" : "—"},
+  // 分母是 capitalBase()，不一定是「投入」——合成多頭那類部位走的是最大風險
+  {k:"lev",   g:"資金槓桿", h:"曝險 ÷ 資金基準", fmt:v => isFinite(v) ? nf(v, 2) + "×" : "—"},
   {k:"omega", g:"波動倍數", h:"標的 ±1% 的放大", fmt:v => isFinite(v) ? nf(v, 2) + "×" : "—"}
 ];
 

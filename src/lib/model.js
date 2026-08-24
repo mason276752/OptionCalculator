@@ -268,20 +268,105 @@ export function analyze(){
      下限：買權為標的市值 10%，賣權為履約價金額 10%
    風險無上限時「最大虧損」當不了分母，只能用這條公式估。
    注意這是 Reg-T 基準，券商的投資組合保證金會更低；台指選擇權用 SPAN，公式完全不同。 */
-export function regTMargin(){
+/* S 與 premiumOf 可以換掉，好讓同一條公式在別的標的價上重算，畫成隨價格變化的曲線。
+   兩個參數都省略時（regTMargin()）行為與過去完全相同。
+   premiumOf 換成 legValue 就是「權利金重新評價」的版本，貼近券商的維持保證金。 */
+export function regTMargin(S = state.S, premiumOf = leg => leg.premium){
   let m = 0;
   for(const leg of state.legs){
     if(leg.type === "stock"){ m += Math.abs(leg.side*leg.qty*leg.premium); continue; }
     const n = leg.qty*state.mult;
-    if(leg.side === 1){ m += leg.premium*n; continue; }   // 買方佔用的就是付出的權利金
-    const U = state.S*n;
+    const prem = premiumOf(leg);
+    if(leg.side === 1){ m += prem*n; continue; }   // 買方佔用的就是付出的權利金
+    const U = S*n;
     const otm = leg.type === "call"
-      ? Math.max(0, leg.K - state.S)*n
-      : Math.max(0, state.S - leg.K)*n;
+      ? Math.max(0, leg.K - S)*n
+      : Math.max(0, S - leg.K)*n;
     const floor = leg.type === "call" ? 0.10*U : 0.10*leg.K*n;
-    m += leg.premium*n + Math.max(0.20*U - otm, floor);
+    m += prem*n + Math.max(0.20*U - otm, floor);
   }
   return m;
+}
+
+// 有沒有任何賣出腳（含放空現股）——完全沒有就是純買方，全額付現、不佔保證金
+export const hasShortLeg = () => state.legs.some(l => l.side === -1);
+
+/* ---- 賣出腳有沒有被掩護 ----
+   一條賣出腳可以被三種東西擋住，要求完全不同：
+     現股      多頭現股掩護賣出買權（每口 mult 股）、空頭現股掩護賣出賣權 → 不另外要求
+     買進腳    同型別、到期不早於它的買進腳 → 要求＝兩履約價的價差寬度
+     什麼都沒有 裸露，走 Reg-T 公式 → 而那條公式吃標的價格，這才是保證金會變動的來源
+   同型別的買賣腳由低到高依序配對，配出來就是一般人心裡的那幾組價差。
+   買進腳不能比賣出腳早到期：早一天到期，賣出腳的後半生就沒人擋了。 */
+function sideRequirement(type, S, premiumOf, stockCover){
+  const mult = state.mult;
+  const shorts = [], longs = [];
+  for(const l of state.legs){
+    if(l.type !== type) continue;
+    (l.side === -1 ? shorts : longs).push({K:l.K, qty:l.qty, d:legDte(l), leg:l});
+  }
+  shorts.sort((a, b) => a.K - b.K);
+  longs.sort((a, b) => a.K - b.K);
+
+  let cover = stockCover, req = 0, naked = 0, nakedPrem = 0;
+  for(const s of shorts){
+    let n = s.qty;
+    const byStock = Math.min(n, cover);
+    n -= byStock; cover -= byStock;
+    for(const lg of longs){
+      if(n <= 0) break;
+      if(lg.qty <= 0 || lg.d < s.d) continue;
+      const k = Math.min(n, lg.qty);
+      // 買進腳在賣出腳「更有利的那一側」時完全擋住，價差寬度為零（借記價差）
+      req += Math.max(0, type === "call" ? lg.K - s.K : s.K - lg.K) * mult * k;
+      n -= k; lg.qty -= k;
+    }
+    if(n > 0){
+      // Reg-T 裸賣：權利金收入 ＋ max(標的市值 20% − 價外金額, 下限)
+      const u = S*mult*n;
+      const otm = Math.max(0, type === "call" ? s.K - S : S - s.K)*mult*n;
+      const floor = type === "call" ? 0.10*u : 0.10*s.K*mult*n;
+      const prem = premiumOf(s.leg)*mult*n;
+      req += prem + Math.max(0.20*u - otm, floor);
+      naked += n; nakedPrem += prem;
+    }
+  }
+  return {req, naked, nakedPrem};
+}
+
+export function marginDetail(S = state.S, premiumOf = leg => leg.premium){
+  const mult = state.mult;
+  let longShares = 0, shortShares = 0;
+  for(const l of state.legs) if(l.type === "stock"){
+    if(l.side === 1) longShares += l.qty; else shortShares += l.qty;
+  }
+  const c = sideRequirement("call", S, premiumOf, Math.floor(longShares/mult));
+  const p = sideRequirement("put",  S, premiumOf, Math.floor(shortShares/mult));
+  /* 標的只會落在一邊，兩側不會同時吃到最大要求，所以取較大的那一邊。
+     兩邊都有裸露腳時（賣出跨式／勒式），Reg-T 的慣例是「較大的一邊 ＋ 另一邊的權利金」，
+     因為另一邊雖然不會同時被吃爆，收下的權利金仍是要還的負債。 */
+  const bothNaked = c.naked > 0 && p.naked > 0;
+  const other = bothNaked ? (c.req >= p.req ? p.nakedPrem : c.nakedPrem) : 0;
+  // 放空現股本身要壓保證金：Reg-T 初始 50%（另外 100% 由賣出所得抵充）
+  const shortStock = 0.5*shortShares*S;
+  return {
+    req: Math.max(c.req, p.req) + other + shortStock,
+    naked: c.naked + p.naked, shortStock
+  };
+}
+
+/* 所需保證金＝帳戶必須壓住的錢。兩種擔保方式取低者：
+     一、Reg-T 配對後的要求（上面那套：價差寬度＋裸露腳的公式＋放空現股）
+     二、最壞情況擔保＝最大虧損扣掉建倉當下已付（或已收）的現金
+   取低者的理由是「不必為一個最多賠 X 的部位壓超過 X 的錢」。
+   風險無上限時第二項不存在，只剩 Reg-T——那時保證金才會隨標的價格跑。
+   注意 Reg-T 對破翼蝶這類不對稱結構其實會收到較高的那一邊，此處取低者偏寬鬆。 */
+export function requiredMargin(a, S = state.S, premiumOf){
+  const d = marginDetail(S, premiumOf);
+  if(!(d.req > 0)) return 0;
+  if(isFinite(a.maxLoss))
+    return Math.min(d.req, Math.max(0, Math.abs(a.maxLoss) - (-a.netPremium + a.stockCost)));
+  return d.req;
 }
 
 /* 佔用資金：買方是實際掏出的錢；風險有限的賣方用最大虧損；裸賣只能用 Reg-T 估。
@@ -311,6 +396,64 @@ export function positionValue(d = state.tRem){
     v += n * legValue(leg, state.S, d);
   }
   return v;
+}
+
+/* ============ 帳戶資金與強制平倉 ============
+   權益 ＝ 帳戶資金 ＋ 部位未實現損益。券商看的是「權益有沒有低於維持保證金」，
+   而不是「有沒有虧到本金歸零」——追繳一定發生在歸零之前。
+   維持保證金用重新評價的版本：賣出腳按當下理論價，那才是被追繳時的實況。
+   兩者都在同一個模擬時點 d 上求解，追繳是現在會發生的事，不是到期才算帳。 */
+export const maintenanceMargin = (a, S, d = state.tRem) =>
+  requiredMargin(a, S, leg => legValue(leg, S, d));
+
+// 在 [lo, hi] 之間掃出 fn 的變號點，再各自二分收斂
+function findRoots(fn, lo, hi, N){
+  const out = [];
+  let prevX = lo, prevV = fn(lo);
+  for(let i = 1; i <= N; i++){
+    const x = lo + (hi - lo)*i/N, v = fn(x);
+    if(prevV === 0) out.push(prevX);
+    else if(prevV*v < 0){
+      let a = prevX, b = x, fa = prevV;
+      for(let k = 0; k < 60 && b - a > 1e-7; k++){
+        const m = (a + b)/2, fm = fn(m);
+        if((fa < 0) === (fm < 0)){ a = m; fa = fm; } else b = m;
+      }
+      out.push((a + b)/2);
+    }
+    prevX = x; prevV = v;
+  }
+  return out;
+}
+
+/* 找出「權益跌破維持保證金（追繳）」與「權益歸零」的標的價位。
+   各回傳現價上下最近的那一個——中間隔著好幾個轉折時，先撞到的才是會發生的那個。 */
+export function riskThresholds(a, capital, d = state.tRem){
+  if(!(capital > 0)) return null;
+  const S0 = state.S;
+  const strikes = state.legs.map(l => l.K || 0);
+  const hi = Math.max(S0*4, ...strikes.map(k => k*2), 10);
+  const N = 240;
+  const nearest = roots => ({
+    down: roots.filter(r => r < S0 - 1e-9).sort((x, y) => y - x)[0] ?? null,
+    up:   roots.filter(r => r > S0 + 1e-9).sort((x, y) => x - y)[0] ?? null
+  });
+  const call = nearest(findRoots(S => capital + pnlAt(S, d) - maintenanceMargin(a, S, d), 1e-6, hi, N));
+  const zero = nearest(findRoots(S => capital + pnlAt(S, d), 1e-6, hi, N));
+  /* 不佔保證金的部位（純買方、掩護性買權），「權益低於維持保證金」就等於「權益歸零」，
+     兩條線重合。只留歸零那一個，否則摘要會把同一件事講兩遍。 */
+  const same = (x, y) => x != null && y != null && Math.abs(x - y) <= Math.max(1, Math.abs(x))*1e-6;
+  for(const side of ["down", "up"]) if(same(call[side], zero[side])) call[side] = null;
+
+  const equityNow = capital + pnlAt(S0, d);
+  const maintNow = maintenanceMargin(a, S0, d);
+  return {
+    call, zero, equityNow, maintNow, buffer: equityNow - maintNow,
+    // 已經在追繳狀態了：現價當下權益就低於維持保證金
+    breached: equityNow < maintNow,
+    // 連建倉的現金都不夠：這筆部位根本開不起來
+    shortfall: Math.max(0, (-a.netPremium + a.stockCost) - capital)
+  };
 }
 
 /* 希臘字母同樣按每一腳自己的剩餘天數算，加總才是部位真正的曝險。

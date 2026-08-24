@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref } from "vue";
-import { state, isMulti, activeCombo, shownCombos, withCombo, comboPos, comboNeg, comboAcc } from "../lib/state.js";
-import { analyze, expiryPnl, pnlAt, legIv } from "../lib/model.js";
+import { state, isMulti, activeCombo, shownCombos, withCombo, comboPos, comboNeg, comboAcc, spotAnchor } from "../lib/state.js";
+import { analyze, expiryPnl, pnlAt, legIv, riskThresholds } from "../lib/model.js";
 import { nf, money, signedMoney, price } from "../lib/format.js";
 
 const props = defineProps({ a: { type: Object, required: true } });
@@ -45,8 +45,9 @@ const geom = computed(() => {
   const M = narrow ? {t:20, r:30, b:40, l:52} : {t:22, r:70, b:42, l:76};
   const iw = w - M.l - M.r, ih = H - M.t - M.b;
 
-  const lo = Math.max(0, state.S*(1 - state.rangePct/100));
-  const hi = state.S*(1 + state.rangePct/100);
+  // 區間以錨點為中心，不是以 state.S——現價滑桿橫移時視窗要固定住（見 state.js）
+  const lo = Math.max(0, spotAnchor.value*(1 - state.rangePct/100));
+  const hi = spotAnchor.value*(1 + state.rangePct/100);
 
   // 每一套顯示中的組合各掃一次曲線。取樣格是共用的，兩條線才落在同一批 x 上，
   // 游標與末端標籤也才對得起來。
@@ -133,6 +134,68 @@ const geom = computed(() => {
     yTicks: niceTicks(yMin, yMax, narrow ? 4 : 5),
     cur: drawn.find(s => s.c === act) || null
   };
+});
+
+/* ---- 帳戶資金與強制平倉 ----
+   問的是「標的走到哪會出事」，所以答案畫成 x 軸上的警戒區間，而不是 y 軸上的水平線：
+   資金一大，「維持保證金 − 資金」會掉到 −80,000 以下，早就跑出圖的 y 範圍看不到了；
+   價位則永遠落在橫軸上。追繳區從門檻價位往外延伸，歸零區疊在更外面。
+   門檻用 T+n 的理論損益求解——追繳是現在會發生的事，拿到期損益去比會低估風險，
+   因為那時時間價值早就走完了。
+   顏色刻意不用紅綠：紅綠在這個工具裡專講漲跌，警戒區借用會讀成「跌就是危險」。 */
+const risk = computed(() => {
+  const cap = state.capital;
+  if(!(cap > 0)) return null;
+  const g = geom.value;
+  const th = riskThresholds(props.a, cap, state.tRem);
+  const right = g.M.l + g.iw;
+  // 把門檻價位換成畫面上的一塊區間；完全落在可視範圍外就不畫
+  const zone = (v, side) => {
+    if(v == null) return null;
+    if(side === "down"){
+      if(v <= g.lo) return null;
+      const at = g.x(Math.min(v, g.hi));
+      return {x: g.M.l, w: at - g.M.l, at, inside: v < g.hi};
+    }
+    if(v >= g.hi) return null;
+    const at = g.x(Math.max(v, g.lo));
+    return {x: at, w: right - at, at, inside: v > g.lo};
+  };
+  const zones = [], marks = [];
+  for(const [key, text, op] of [["call", "追繳", .06], ["zero", "歸零", .09]])
+    for(const [side, anchor] of [["down", "end"], ["up", "start"]]){
+      const z = zone(th[key][side], side);
+      if(!z) continue;
+      zones.push({...z, op});
+      if(z.inside) marks.push({x: z.at, text, anchor});
+    }
+  return {th, zones, marks};
+});
+
+const riskText = computed(() => {
+  const r = risk.value;
+  if(!r) return "";
+  const t = r.th;
+  // 連建倉的錢都不夠，就沒有「什麼時候被追繳」可談了
+  if(t.shortfall > 0.005)
+    return `⚠ 建倉支出 ${money(state.capital + t.shortfall)} 超過帳戶資金 ${money(state.capital)}`
+      + `，還差 ${money(t.shortfall)}——這個部位開不起來。`;
+  if(t.breached)
+    return `⚠ 目前權益 ${money(t.equityNow)} 已經低於維持保證金 ${money(t.maintNow)}`
+      + `——以這筆資金，這個部位一建倉就在追繳狀態。`;
+  const at = S => `${price(S)}（${S >= state.S ? "+" : "−"}${nf(Math.abs(S/state.S - 1)*100, 1)}%）`;
+  const leg = (side, verb) => {
+    const bits = [];
+    if(t.call[side] != null) bits.push(`${verb}到 ${at(t.call[side])} 觸發追繳`);
+    if(t.zero[side] != null) bits.push(`${verb}到 ${at(t.zero[side])} 權益歸零`);
+    return bits.join("、");
+  };
+  const parts = [leg("down", "跌"), leg("up", "漲")].filter(Boolean);
+  const head = `資金 ${money(state.capital)}：權益 ${money(t.equityNow)}、維持保證金 ${money(t.maintNow)}`
+    + `，緩衝 ${money(t.buffer)}。`;
+  return head + (parts.length
+    ? parts.join("；") + "。"
+    : "這個部位的虧損上限吃不掉這筆資金，不會被追繳或歸零。");
 });
 
 /* ---- 游標吸附 ----
@@ -252,6 +315,61 @@ onBeforeUnmount(() => { removeEventListener("keydown", onKey); removeEventListen
 const tRemLabel = computed(() => state.tRem === 0
   ? "到期日"
   : "剩 " + state.tRem + " 天（已過 " + (state.dte - state.tRem) + " 天）");
+
+/* ---- 現價：直接拖圖上那個標籤 ----
+   拖動就是改 state.S，摘要、希臘字母、保證金、目前損益全部跟著走。
+   把手只放在標籤上，垂直線本身不接受拖曳——整條線都是熱區的話，
+   它會跨越整個繪圖區，跟讀值游標搶滑鼠。
+   級距取「約 400 段」附近的整齊數字，免得拖出 714.2500001 這種讀不出所以然的價格。 */
+const NICE_STEPS = [0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50, 100];
+const spotStep = computed(() => {
+  const raw = (geom.value.hi - geom.value.lo)/400;
+  return NICE_STEPS.find(s => s >= raw) ?? 250;
+});
+const atAnchor = computed(() => Math.abs(state.S/spotAnchor.value - 1) < 5e-5);
+const spotTag = computed(() => {
+  const d = state.S/spotAnchor.value - 1;
+  return "現價 " + price(state.S)
+    + (atAnchor.value ? "" : `　${d >= 0 ? "+" : "−"}${nf(Math.abs(d)*100, 1)}%`);
+});
+
+/* 把手永遠畫得出來：現價被夾在可視區間內取位置。
+   縮小圖表範圍時現價可能落到區間外，若跟著隱藏，就再也抓不回來了。 */
+const spotX = computed(() => {
+  const g = geom.value;
+  return g.x(Math.min(g.hi, Math.max(g.lo, state.S)));
+});
+// 標籤靠右邊界時翻到線的左側，才不會被裁掉
+const spotLabelPos = computed(() => {
+  const g = geom.value;
+  const w = [...spotTag.value].reduce((a, c) => a + (c.charCodeAt(0) > 0x2000 ? 10.5 : 6.3), 0);
+  const flip = spotX.value + 8 + w > g.M.l + g.iw;
+  return {x: flip ? spotX.value - 8 : spotX.value + 8, anchor: flip ? "end" : "start"};
+});
+
+const dragging = ref(false);
+function moveSpotTo(clientX){
+  const g = geom.value;
+  const rect = svgEl.value.getBoundingClientRect();
+  const px = (clientX - rect.left)/rect.width*g.W;
+  const st = spotStep.value;
+  // 先吸到級距上，再夾進區間——順序反過來的話，四捨五入會把值推出區間半格，
+  // 把手就跑到圖外去了
+  const snapped = Math.round(g.invX(px)/st)*st;
+  state.S = +Math.min(g.hi, Math.max(g.lo, snapped)).toFixed(6);
+}
+function onSpotDown(ev){
+  ev.preventDefault();
+  dragging.value = true;
+  pointer.value = null;               // 拖動時把讀值游標收起來，兩條十字線疊著很吵
+  try{ ev.currentTarget.setPointerCapture(ev.pointerId); }catch(e){/* 舊瀏覽器沒有就算了 */}
+}
+function onSpotMove(ev){ if(dragging.value) moveSpotTo(ev.clientX); }
+function onSpotUp(ev){
+  if(!dragging.value) return;
+  dragging.value = false;
+  try{ ev.currentTarget.releasePointerCapture(ev.pointerId); }catch(e){/* 已經放掉了 */}
+}
 </script>
 
 <template>
@@ -295,6 +413,18 @@ const tRemLabel = computed(() => state.tRem === 0
         <text :x="geom.x(k)" :y="geom.M.t+geom.ih+27" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ink-3)">K {{ price(k) }}</text>
       </template>
 
+      <!-- 資金警戒區：標的走進這一段就會出事。畫在損益曲線之前，曲線才壓得住 -->
+      <g v-if="risk" clip-path="url(#clipPlot)">
+        <rect v-for="(z, i) in risk.zones" :key="'z'+i"
+          :x="z.x" :y="geom.M.t" :width="z.w" :height="geom.ih" fill="var(--ink)" :opacity="z.op"/>
+        <template v-for="(m, i) in risk.marks" :key="'m'+i">
+          <line :x1="m.x" :y1="geom.M.t" :x2="m.x" :y2="geom.M.t+geom.ih"
+            stroke="var(--ink-2)" stroke-width="1" stroke-dasharray="6 3"/>
+          <text :x="m.x + (m.anchor === 'end' ? -4 : 4)" :y="geom.M.t+geom.ih-5" :text-anchor="m.anchor"
+            font-family="var(--mono)" font-size="9.5" fill="var(--ink-2)">{{ m.text }}</text>
+        </template>
+      </g>
+
       <!-- 只有一套組合時，面積與紅綠是在講「賺還是賠」；多套疊上來之後同一塊顏色
            會同時屬於好幾條曲線，那個語意就崩了——所以改成一套一個顏色，
            實線是到期、虛線是 T+n，面積全部拿掉。 -->
@@ -333,11 +463,14 @@ const tRemLabel = computed(() => state.tRem === 0
           :fill="geom.multi ? s.acc : 'var(--card)'" :stroke="geom.multi ? 'var(--card)' : 'var(--ink)'" stroke-width="2"/>
       </template>
 
-      <!-- 現價 -->
-      <template v-if="state.S >= geom.lo && state.S <= geom.hi">
-        <line :x1="geom.x(state.S)" :y1="geom.M.t" :x2="geom.x(state.S)" :y2="geom.M.t+geom.ih" stroke="var(--ink)" stroke-width="1" stroke-dasharray="4 3" opacity=".6"/>
-        <text :x="geom.x(state.S)+5" :y="geom.M.t+11" font-family="var(--mono)" font-size="10.5" fill="var(--ink-2)">現價 {{ price(state.S) }}</text>
-      </template>
+      <!-- 現價的垂直線與標籤；可拖的倒三角另外畫在游標熱區之上 -->
+      <g style="pointer-events:none">
+        <line :x1="spotX" :y1="geom.M.t" :x2="spotX" :y2="geom.M.t+geom.ih"
+          stroke="var(--ink)" stroke-width="1" stroke-dasharray="4 3" :opacity="dragging ? '.9' : '.6'"/>
+        <text :x="spotLabelPos.x" :y="geom.M.t+21" :text-anchor="spotLabelPos.anchor"
+          font-family="var(--mono)" font-size="10.5"
+          :fill="dragging ? 'var(--accent)' : 'var(--ink-2)'">{{ spotTag }}</text>
+      </g>
 
       <!-- 軸標籤 -->
       <text v-for="t in geom.yTicks" :key="'ty'+t" :x="geom.M.l-10" :y="geom.y(t)+3.5" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-3)">{{ money(t) }}</text>
@@ -387,12 +520,30 @@ const tRemLabel = computed(() => state.tRem === 0
         </template>
       </g>
 
-      <rect :x="geom.M.l" :y="geom.M.t" :width="geom.iw" :height="geom.ih" fill="transparent" style="cursor:crosshair"
+      <rect class="hit" :x="geom.M.l" :y="geom.M.t" :width="geom.iw" :height="geom.ih" fill="transparent" style="cursor:crosshair"
         @mousemove="move" @mouseleave="leave"
         @touchstart.passive="move" @touchmove.passive="move" @touchend="leave"/>
+
+      <!-- 現價把手：垂直線頂端的倒三角。畫在熱區之上才收得到滑鼠。
+           熱區只有這個小三角，線本身不吃滑鼠——整條線都是熱區會跟讀值游標搶。
+           雙擊回到基準價。 -->
+      <g class="spot-handle" :class="{on: dragging}"
+        @pointerdown="onSpotDown" @pointermove="onSpotMove"
+        @pointerup="onSpotUp" @pointercancel="onSpotUp"
+        @dblclick="state.S = spotAnchor">
+        <rect :x="spotX - 13" :y="geom.M.t - 4" width="26" height="22" fill="transparent"/>
+        <path :d="`M${spotX - 7} ${geom.M.t + 1} L${spotX + 7} ${geom.M.t + 1} L${spotX} ${geom.M.t + 11} Z`"
+          :fill="dragging ? 'var(--accent)' : 'var(--ink)'" stroke="var(--card)" stroke-width="1.5"/>
+      </g>
     </svg>
 
-    <p class="chart-hint">游標會吸附到現價、履約價與損益兩平點；按住 <kbd>Shift</kbd>（或 <kbd>⌘</kbd>／<kbd>Ctrl</kbd>／<kbd>Alt</kbd>）可讀任意價位。</p>
+    <p class="chart-hint">
+      游標會吸附到現價、履約價與損益兩平點；按住 <kbd>Shift</kbd>（或 <kbd>⌘</kbd>／<kbd>Ctrl</kbd>／<kbd>Alt</kbd>）可讀任意價位。
+      拖動現價線頂端的<b>倒三角</b>可左右移動整條線，摘要與保證金會跟著重算；雙擊三角回到基準價。
+      <button v-if="!atAnchor" class="btn btn-ghost btn-mono" type="button"
+        title="把現價移回基準價" @click="state.S = spotAnchor">歸位</button>
+    </p>
+    <p class="chart-risk" v-if="riskText" :class="{warn: risk.th.breached || risk.th.shortfall > 0.005}">{{ riskText }}</p>
     <div class="timebar">
       <label for="tRem">模擬時點</label>
       <input type="range" id="tRem" min="0" :max="state.dte" step="1"

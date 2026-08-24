@@ -9,6 +9,7 @@ import ComboPanel from "./components/ComboPanel.vue";
 import LegsPanel from "./components/LegsPanel.vue";
 import KpiPanel from "./components/KpiPanel.vue";
 import PnlChart from "./components/PnlChart.vue";
+import MarginChart from "./components/MarginChart.vue";
 import GreeksPanel from "./components/GreeksPanel.vue";
 import StrategyPanel from "./components/StrategyPanel.vue";
 import StrategyTable from "./components/StrategyTable.vue";
@@ -35,7 +36,8 @@ watch(state, saveState, {deep:true, flush:"post"});
       <div class="block">
         <div class="block-head"><p class="eyebrow">圖表範圍</p></div>
         <div class="field">
-          <label for="rangePct">以現價為中心 ±<span>{{ state.rangePct }}</span>%</label>
+          <!-- 中心是「基準價」而不是 state.S：現價滑桿橫移時區間要固定住 -->
+          <label for="rangePct">以基準價為中心 ±<span>{{ state.rangePct }}</span>%</label>
           <input type="range" id="rangePct" min="5" max="90" step="5" style="accent-color:var(--accent)"
             :value="state.rangePct" @input="state.rangePct = +$event.target.value">
         </div>
@@ -45,6 +47,7 @@ watch(state, saveState, {deep:true, flush:"post"});
     <main class="stage">
       <KpiPanel :a="a" />
       <PnlChart :a="a" />
+      <MarginChart :a="a" />
       <GreeksPanel :a="a" />
       <StrategyPanel :a="a" />
       <StrategyTable />

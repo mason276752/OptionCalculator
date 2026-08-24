@@ -2,6 +2,7 @@
 import { computed, reactive, watch } from "vue";
 import { daysTo } from "../lib/data.js";
 import { state, src, nextLegId, nextGroupId } from "../lib/state.js";
+import { setSpot } from "../lib/actions.js";
 import { solveExposure, SOL_DELTA_MIN, SOL_DELTA_MAX, SOL_MAX_ROWS, SOL_FIT } from "../lib/solver.js";
 import { nf, money, signedMoney, price, cls } from "../lib/format.js";
 
@@ -68,7 +69,7 @@ const view = computed(() => {
 function apply(x){
   const {ex, dte} = view.value;
   const cp = form.type;
-  state.S = src.chain.spot;
+  setSpot(src.chain.spot);
   state.dte = state.tRem = dte;
   state.r = ex.r; state.q = ex.q; state.iv = x.iv;
   const g = nextGroupId();

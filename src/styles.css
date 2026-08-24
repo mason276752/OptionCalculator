@@ -204,14 +204,35 @@ figure.chart{margin:0; border:1px solid var(--rule); border-radius:2px; backgrou
 .legend .swatch + .swatch{margin-left:-4px}
 .plot{display:block; width:100%; touch-action:pan-y}
 .chart-hint{margin:0; padding:2px 16px 0; font-size:11px; color:var(--ink-3)}
+.chart-hint b{font-weight:600; color:var(--ink-2)}
+.chart-hint .btn{padding:1px 6px; font-size:10.5px; margin-left:6px; vertical-align:baseline}
+/* 資金警戒摘要：與提示同一區塊，但用墨色分量拉出來，不借用漲跌的紅綠 */
+.chart-risk{
+  margin:0; padding:6px 16px 0; font-family:var(--mono); font-size:11px;
+  font-variant-numeric:tabular-nums; color:var(--ink-2);
+}
+.chart-risk.warn{color:var(--ink); font-weight:600}
+/* 現價把手＝線頂端的倒三角；touch-action 關掉才不會在手機上變成捲頁 */
+.spot-handle{cursor:ew-resize; touch-action:none}
+.spot-handle:hover path{fill:var(--accent)}
+.spot-handle.on{cursor:grabbing}
 .chart-hint kbd{
   font-family:var(--mono); font-size:10px; color:var(--ink-2);
   border:1px solid var(--rule); border-radius:2px; padding:0 4px; background:var(--sunk);
 }
-.timebar{display:flex; align-items:center; gap:12px; padding:0 16px 14px; border-top:1px solid var(--rule-soft); margin-top:2px; padding-top:12px}
+/* 兩條滑桿（時間一條、價格一條）：用格線讓兩排的標籤與數值各自對齊 */
+.timebar{
+  display:grid; grid-template-columns:auto minmax(80px,1fr) auto; align-items:center;
+  gap:9px 12px; padding:12px 16px 14px; border-top:1px solid var(--rule-soft); margin-top:2px;
+}
 .timebar label{font-size:11.5px; color:var(--ink-2); white-space:nowrap}
-.timebar input[type=range]{flex:1; accent-color:var(--accent); min-width:80px}
-.timebar output{font-family:var(--mono); font-size:12px; font-variant-numeric:tabular-nums; color:var(--ink); white-space:nowrap}
+.timebar input[type=range]{accent-color:var(--accent); min-width:80px; width:100%}
+.timebar output{
+  display:flex; align-items:center; gap:6px; justify-content:flex-end;
+  font-family:var(--mono); font-size:12px; font-variant-numeric:tabular-nums;
+  color:var(--ink); white-space:nowrap;
+}
+.timebar output .btn{padding:2px 6px; font-size:10.5px}
 
 /* ---------- 希臘字母 ---------- */
 .greeks{
@@ -256,6 +277,8 @@ td .sub-n{color:var(--ink-3); margin-left:8px; font-size:10.5px}   /* 主數字�
 .strat-facts > div{display:flex; flex-direction:column; gap:3px; min-width:0}
 .strat-facts .k{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3)}
 .strat-facts .v{font-size:12.5px; color:var(--ink); line-height:1.45}
+/* 實算數字底下那行範本原本的定性描述（「貸記（持股成本另計）」之類） */
+.strat-facts .v .note{display:block; font-size:11px; color:var(--ink-3); margin-top:1px}
 .strat-goal{margin:0 0 12px; font-size:13px; line-height:1.65; max-width:74ch}
 /* ---------- 策略堆疊 ---------- */
 .strat-stack{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:12px}
@@ -320,3 +343,11 @@ td .tag{color:var(--ink-3); font-size:10.5px; margin-right:6px}
 
 .footnote{font-size:11.5px; color:var(--ink-3); margin:0; max-width:70ch}
 .warn{font-size:12px; color:var(--ink-2); background:var(--sunk); border:1px solid var(--rule); border-radius:2px; padding:8px 10px}
+
+/* ---------- 保證金隨標的價格的變化 ---------- */
+.margin-chart{
+  border:1px solid var(--rule); border-radius:2px; background:var(--card);
+  padding:8px 14px 10px; box-shadow:var(--shadow);
+}
+.margin-chart svg{display:block; width:100%; height:auto}
+.margin-chart .legend{margin:6px 0 0; gap:16px}

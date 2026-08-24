@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { state, isMulti, activeCombo } from "../lib/state.js";
 import {
-  PRESET_GROUPS, applyPreset, stackList, comboFacts, netLegParts,
+  PRESET_GROUPS, applyPreset, stackList, comboFacts, cashFlowText, netLegParts,
   mergeableCount, dropPresetGroup, mergeDuplicateLegs, clearPreset
 } from "../lib/strategies.js";
 
@@ -19,10 +19,14 @@ const solo = computed(() => list.value.length === 1 && !extra.value ? list.value
 
 const merge = computed(() => mergeableCount());
 
+/* 現金流改用實算值，範本原本那句定性描述降成副標。
+   其餘四欄仍是範本的文字：它們講的是「這個結構本來的樣子」，
+   實算的最大獲利／虧損就在上方摘要，兩邊各司其職。 */
 const soloFacts = computed(() => {
   const s = solo.value;
   return s ? [
-    ["市場觀點", s.view], ["建倉組成", s.build], ["現金流", s.flow],
+    ["市場觀點", s.view], ["建倉組成", s.build],
+    ["現金流", cashFlowText(props.a), s.flow],
     ["最大獲利", s.maxP], ["最大虧損", s.maxL]
   ] : [];
 });
@@ -73,8 +77,9 @@ function onStack(ev){
 
     <div v-if="solo">
       <div class="strat-facts">
-        <div v-for="[k, v] in soloFacts" :key="k">
-          <span class="k">{{ k }}</span><span class="v">{{ v }}</span>
+        <div v-for="[k, v, note] in soloFacts" :key="k">
+          <span class="k">{{ k }}</span>
+          <span class="v">{{ v }}<span class="note" v-if="note">{{ note }}</span></span>
         </div>
       </div>
       <p class="strat-goal">{{ solo.goal }}</p>

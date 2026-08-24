@@ -4,7 +4,7 @@ import { SYMBOLS, daysTo } from "../lib/data.js";
 import { state, src } from "../lib/state.js";
 import { ivTermAt, ivShift } from "../lib/model.js";
 import { repriceLegsFrom } from "../lib/quotes.js";
-import { onNum, applySymbol } from "../lib/actions.js";
+import { onNum, applySymbol, setSpot } from "../lib/actions.js";
 import { dateAfter, nf } from "../lib/format.js";
 
 const props = defineProps({ a: { type: Object, required: true } });
@@ -91,7 +91,7 @@ function ivToAll(){
       <div class="field">
         <label for="S">標的現價</label>
         <input type="number" id="S" step="0.01" min="0.01"
-          :value="state.S" @input="onNum($event, v => state.S = v)">
+          :value="state.S" @input="onNum($event, setSpot)">
       </div>
       <div class="field">
         <label for="dte">距到期天數 <span class="unit">{{ expDate }}</span></label>
@@ -128,6 +128,11 @@ function ivToAll(){
         <label for="q">股息殖利率 %</label>
         <input type="number" id="q" step="0.05"
           :value="state.q" @input="onNum($event, v => state.q = v)">
+      </div>
+      <div class="field wide">
+        <label for="capital">帳戶資金 <span class="unit">（填了才算追繳與歸零價位）</span></label>
+        <input type="number" id="capital" step="1000" min="0" placeholder="未設定"
+          :value="state.capital || ''" @input="state.capital = Math.max(0, parseFloat($event.target.value) || 0)">
       </div>
     </div>
     <div v-if="hasTerm">

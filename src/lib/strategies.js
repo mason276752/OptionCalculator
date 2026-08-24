@@ -502,12 +502,19 @@ export const stackList = () => state.presets.map(p => ({...p, st:STRAT[p?.k]})).
 /* 疊加之後，畫面上的腳位是好幾個範本加起來的，範本自己那句「最大獲利＝履約價差 − 淨權利金」
    已經不成立了。所以組合部位的五個數字一律改用 analyze() 的實算值，
    範本的文字敘述退居下方，只說明「這個組件本身在做什麼」。 */
-export function comboFacts(a){
+/* 建倉現金流的實算敘述。單一範本與疊加檢視共用同一個字串——
+   範本自己的 flow 欄位（「貸記（持股成本另計）」之類）只描述型態、沒有數字，
+   單獨看反而是最常用的情境卻讀不到金額。 */
+export function cashFlowText(a){
   const flow = Math.abs(a.netPremium) < 0.005 ? "收支相抵"
     : a.netPremium > 0 ? `貸記 ${money(a.netPremium)}` : `借記 ${money(-a.netPremium)}`;
+  return flow + (Math.abs(a.stockCost) > 0.005 ? `（另含現股 ${money(a.stockCost)}）` : "");
+}
+
+export function comboFacts(a){
   return [
     ["淨部位", netLegSummary()],
-    ["現金流", flow + (Math.abs(a.stockCost) > 0.005 ? `（另含現股 ${money(a.stockCost)}）` : "")],
+    ["現金流", cashFlowText(a)],
     ["最大獲利", isFinite(a.maxProfit) ? money(a.maxProfit) : "無上限"],
     ["最大虧損", isFinite(a.maxLoss) ? money(a.maxLoss) : "無下限"],
     ["損益兩平", a.breakevens.length ? a.breakevens.map(price).join("　") : "全區間同方向"]

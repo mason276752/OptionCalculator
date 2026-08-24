@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 import { MARKETS, CHAINS, SYMBOLS, daysTo } from "./data.js";
 
 /* ============ 狀態 ============ */
@@ -22,6 +22,8 @@ const DTE0 = MARKET0.expiry ? daysTo(MARKET0.expiry) : MARKET0.dte;
 const raw = {
   S:MARKET0.spot, dte:DTE0, iv:MARKET0.iv, mult:100, r:MARKET0.r, q:MARKET0.q,
   symbol:MARKET0.symbol, rangePct:35, tRem:DTE0, ivTerm:true, ivSkew:"strike",
+  // 帳戶資金；0 ＝ 未設定，設了才算追繳與歸零價位
+  capital:0,
   combos:[{
     id:1, name:"組合 A", c:0, on:true,
     // 已套用的範本堆疊：[{k:範本代號, g:群組編號}]。腳位上的 g 指回這裡，
@@ -63,6 +65,14 @@ for(const key of ["legs", "presets"]){
 }
 
 export const state = reactive(raw);
+
+/* 圖表區間的錨點。過去區間直接以 state.S 為中心，但現在現價可以在圖上拖動——
+   若區間跟著 state.S 走，一拖動整張圖就會平移，履約價與曲線在畫面上滑來滑去，
+   根本讀不了。所以錨點只在「換標的」「手動輸入現價」「曝險試算套用」時更新，
+   拖動倒三角不動它：視窗固定，動的是視窗裡那條現價線。
+   刻意不進 localStorage——它是視角而不是部位的一部分，重載時回到 state.S 即可。 */
+export const spotAnchor = ref(raw.S);
+export const setSpotAnchor = v => { if(isFinite(v) && v > 0) spotAnchor.value = v; };
 
 /* 顏色只有四階。同一個色相要靠深淺分辨，能拉開的明度就那麼多——
    四階已經佔滿「最淡的還看得見、最深的還看得出是紅是綠是藍」之間的全部空間，
