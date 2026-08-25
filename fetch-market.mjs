@@ -17,7 +17,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // 前六個是指數 ETF：QQQ／SPY 是本尊，其餘為 2 倍與 3 倍槓桿版；後七個是美股七巨頭
 const DEFAULT_SYMBOLS = [
   "QQQ", "QLD", "TQQQ", "SPY", "SSO", "SPXL",
-  "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA"
+  "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "INTC"
 ];
 const HELP = `用法：node fetch-market.mjs [--symbols QQQ,SPY,…] [--expiry YYYY-MM-DD] [--min-dte 365] [--no-write]
 預設標的：${DEFAULT_SYMBOLS.join(", ")}`;
