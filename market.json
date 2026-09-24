@@ -1,18 +1,18 @@
 {
-  "fetchedAt": "2026-09-23T17:19:10.015Z",
+  "fetchedAt": "2026-09-24T17:24:15.724Z",
   "symbols": {
     "QQQ": {
       "asOf": "2026-09-23 03:56:14",
       "symbol": "QQQ",
       "spot": 748.32,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 750,
-      "iv": 24.13,
+      "iv": 24.18,
       "ivCboe": 23.49,
       "iv30": 17.515,
-      "r": 4.472,
-      "q": 0.393,
+      "r": 4.555,
+      "q": 0.464,
       "callMid": 100.5,
       "putMid": 62.81,
       "call": {
@@ -30,8 +30,8 @@
         "openInterest": 497
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "QLD": {
@@ -39,13 +39,13 @@
       "symbol": "QLD",
       "spot": 97.82,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 97.5,
-      "iv": 44.62,
+      "iv": 44.71,
       "ivCboe": 44.31,
       "iv30": 35.233,
-      "r": 4.472,
-      "q": 1.905,
+      "r": 4.555,
+      "q": 1.98,
       "callMid": 20.8,
       "putMid": 17.3,
       "call": {
@@ -63,8 +63,8 @@
         "openInterest": 26
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "TQQQ": {
@@ -72,13 +72,13 @@
       "symbol": "TQQQ",
       "spot": 81.13,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 80,
-      "iv": 66.99,
+      "iv": 67.12,
       "ivCboe": 66.41,
       "iv30": 51.879,
-      "r": 4.472,
-      "q": 3.12,
+      "r": 4.555,
+      "q": 3.199,
       "callMid": 24.27,
       "putMid": 21.82,
       "call": {
@@ -96,8 +96,8 @@
         "openInterest": 1410
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "XND": {
@@ -105,13 +105,13 @@
       "symbol": "XND",
       "spot": 307.4543,
       "expiry": "2027-11-19",
-      "dte": 422,
+      "dte": 421,
       "strike": 305,
-      "iv": 23.39,
+      "iv": 23.43,
       "ivCboe": 23.54,
       "iv30": 17.379,
-      "r": 4.424,
-      "q": -0.249,
+      "r": 4.494,
+      "q": -0.194,
       "callMid": 40.1,
       "putMid": 21.55,
       "call": {
@@ -129,8 +129,8 @@
         "openInterest": 0
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.474,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.545,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "SPY": {
@@ -138,13 +138,13 @@
       "symbol": "SPY",
       "spot": 773.38,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 775,
-      "iv": 18.68,
+      "iv": 18.71,
       "ivCboe": 17.88,
       "iv30": 11.429,
-      "r": 4.472,
-      "q": 0.631,
+      "r": 4.555,
+      "q": 0.703,
       "callMid": 84.13,
       "putMid": 47.5,
       "call": {
@@ -162,8 +162,8 @@
         "openInterest": 1005
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "SSO": {
@@ -171,13 +171,13 @@
       "symbol": "SSO",
       "spot": 71.54,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 72.5,
-      "iv": 34.75,
+      "iv": 34.82,
       "ivCboe": 35.26,
       "iv30": 22.686,
-      "r": 4.472,
-      "q": 2.158,
+      "r": 4.555,
+      "q": 2.235,
       "callMid": 11.55,
       "putMid": 10.35,
       "call": {
@@ -195,8 +195,8 @@
         "openInterest": 1
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "SPXL": {
@@ -204,13 +204,13 @@
       "symbol": "SPXL",
       "spot": 294.17,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 295,
-      "iv": 48.73,
+      "iv": 48.83,
       "ivCboe": 48.74,
       "iv30": 34.813,
-      "r": 4.472,
-      "q": 2.52,
+      "r": 4.555,
+      "q": 2.598,
       "callMid": 65.5,
       "putMid": 59,
       "call": {
@@ -228,8 +228,8 @@
         "openInterest": 20
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "AAPL": {
@@ -237,13 +237,13 @@
       "symbol": "AAPL",
       "spot": 339.84,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 340,
-      "iv": 28.32,
+      "iv": 28.38,
       "ivCboe": 27.33,
       "iv30": 22.336,
-      "r": 4.472,
-      "q": 0.243,
+      "r": 4.555,
+      "q": 0.313,
       "callMid": 52.53,
       "putMid": 34.17,
       "call": {
@@ -261,8 +261,8 @@
         "openInterest": 742
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "MSFT": {
@@ -270,13 +270,13 @@
       "symbol": "MSFT",
       "spot": 501.48,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 500,
-      "iv": 32.65,
+      "iv": 32.72,
       "ivCboe": 31.74,
       "iv30": 24.928,
-      "r": 4.472,
-      "q": 1.089,
+      "r": 4.555,
+      "q": 1.162,
       "callMid": 84.2,
       "putMid": 61.08,
       "call": {
@@ -294,8 +294,8 @@
         "openInterest": 2280
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "GOOGL": {
@@ -303,13 +303,13 @@
       "symbol": "GOOGL",
       "spot": 351.8011,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 350,
-      "iv": 37.23,
+      "iv": 37.31,
       "ivCboe": 36.41,
       "iv30": 31.013,
-      "r": 4.472,
-      "q": 0.067,
+      "r": 4.555,
+      "q": 0.136,
       "callMid": 69.35,
       "putMid": 47.67,
       "call": {
@@ -327,8 +327,8 @@
         "openInterest": 3075
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "AMZN": {
@@ -336,13 +336,13 @@
       "symbol": "AMZN",
       "spot": 255.43,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 260,
-      "iv": 36.82,
+      "iv": 36.89,
       "ivCboe": 36.03,
       "iv30": 30.204,
-      "r": 4.472,
-      "q": -0.159,
+      "r": 4.555,
+      "q": -0.089,
       "callMid": 47.8,
       "putMid": 36.83,
       "call": {
@@ -360,8 +360,8 @@
         "openInterest": 2636
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "NVDA": {
@@ -369,13 +369,13 @@
       "symbol": "NVDA",
       "spot": 228.56,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 230,
-      "iv": 39.82,
+      "iv": 39.9,
       "ivCboe": 39.06,
       "iv30": 31.155,
-      "r": 4.472,
-      "q": -0.017,
+      "r": 4.555,
+      "q": 0.053,
       "callMid": 46.63,
       "putMid": 34.75,
       "call": {
@@ -393,8 +393,8 @@
         "openInterest": 7076
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "META": {
@@ -402,13 +402,13 @@
       "symbol": "META",
       "spot": 741,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 740,
-      "iv": 44.9,
+      "iv": 44.99,
       "ivCboe": 44.17,
       "iv30": 42.338,
-      "r": 4.472,
-      "q": 0.519,
+      "r": 4.555,
+      "q": 0.59,
       "callMid": 166.4,
       "putMid": 127.8,
       "call": {
@@ -426,8 +426,8 @@
         "openInterest": 193
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "TSLA": {
@@ -435,13 +435,13 @@
       "symbol": "TSLA",
       "spot": 379.15,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 380,
-      "iv": 47.74,
+      "iv": 47.83,
       "ivCboe": 47.04,
       "iv30": 44.439,
-      "r": 4.472,
-      "q": -0.224,
+      "r": 4.555,
+      "q": -0.154,
       "callMid": 91.6,
       "putMid": 69.4,
       "call": {
@@ -459,8 +459,8 @@
         "openInterest": 1294
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     },
     "INTC": {
@@ -468,13 +468,13 @@
       "symbol": "INTC",
       "spot": 124.2354,
       "expiry": "2028-01-21",
-      "dte": 485,
+      "dte": 484,
       "strike": 125,
-      "iv": 68.21,
+      "iv": 68.35,
       "ivCboe": 67.39,
       "iv30": 74.141,
-      "r": 4.472,
-      "q": 0.077,
+      "r": 4.555,
+      "q": 0.147,
       "callMid": 40.22,
       "putMid": 33.9,
       "call": {
@@ -492,8 +492,8 @@
         "openInterest": 4709
       },
       "priceBasis": "買賣價中價",
-      "parYield": 4.522,
-      "yieldCurveDate": "2026-09-22",
+      "parYield": 4.607,
+      "yieldCurveDate": "2026-09-23",
       "dividendYieldNote": "由買賣權平價反推"
     }
   },
